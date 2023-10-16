@@ -1,7 +1,11 @@
 # jenkins-kubernetes-integration
 
-JENKINS INSTALLATION LTS VERSION:
-=================================
+# overview
+![image](https://github.com/vijay2181/jenkins-kubernetes-integration/assets/66196388/88392723-dc1b-4421-8092-d1d495688c4e)
+
+
+1.Jenkins Installation LTS Version:
+-----------------------------------
 ```
 sudo apt update
 ```
@@ -62,7 +66,76 @@ ubuntu@ip-172-31-93-232:~$ sudo cat /var/lib/jenkins/secrets/initialAdminPasswor
 
 
 
+2.Setting Up Docker in Jenkins Server:
+--------------------------------------
 
+```
+# Install Latest Docker
+ curl -fsSL https://get.docker.com -o get-docker.sh
+ sudo sh get-docker.sh
+```
+
+ubuntu@ip-172-31-23-222:~$ docker --version
+
+Docker version 20.10.21, build 20.10.21-0ubuntu1~22.04.3
+
+```
+sudo systemctl enable docker 
+sudo systemctl start docker
+```
+
+ubuntu@ip-172-31-23-222:~$ docker ps
+
+Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/containers/json": dial unix /var/run/docker.sock: connect: permission denied
+
+```
+sudo usermod -aG docker <current_username>
+sudo usermod -aG docker jenkins
+```
+
+still if you do **docker ps** you will get permission error, so you need to refreh the terminal or exit from terminal and login back
+
+Note that the changes will take effect the next time the user logs in or opens a new terminal session.
+
+To reflect the group membership changes in the same terminal session.run below commands
+
+```
+sudo su - jenkins
+newgrp docker
+docker ps 
+```
+
+3.Setup Kubernetes Cluster:
+---------------------------
+- follow below link to setup k8s cluster using kubeadm
+
+```
+https://github.com/vijay2181/kubernetes-setup-using-kubeadm.git
+```
+
+
+4.Setup Jenkins Server to deploy applications into Kubernetes Cluster:
+----------------------------------------------------------------------
+We can deploy docker applications into Kubernetes cluster from Jenkins using two approaches.
+
+1) Using Kubernetes Continues Deploy Plugin
+• Go to Jenkins > Manage Plugins > Available > Search for Kubernetes Continues Deploy > Select And Install.
+
+• Add kube config information in Jenkins Credentials.
+
+Jenkins > Credentials > Add Credentials > Select Kind As Kubernates Configuration ( Kubeconfig) > Select enter directly radio button > copy kubeconfig content from Kubenertes cluster
+
+• Use KubernetesDeploy in pipeline script
+
+```
+stage("Deploy To Kuberates Cluster"){
+   kubernetesDeploy(
+     configs: 'springBootMongo.yml',
+     kubeconfigId: 'KUBERNATES_CONFIG',
+     enableConfigSubstitution: true
+     )
+}
+```
 
 
 
