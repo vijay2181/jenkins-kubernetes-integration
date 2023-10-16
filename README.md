@@ -148,7 +148,7 @@ Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
 
 - allow 6443 port for jenkins server to commuicate with k8s master server
   
-CustomTCP	   TCP	   6443	      172.31.0.0/16
+CustomTCP	  >   TCP	  >   6443	  >    172.31.0.0/16
 
 also add below address details in /etc/hosts file of jenkins, because jenkins server dont know hostname of k8s master, incase you have added below addresses hosts file
 
@@ -163,7 +163,7 @@ sudo vi /etc/hosts
 sudo su - jenkins
 ```
 
-Create config file and copy config file content from Kubernetes Cluster master machine to jenkins user home directory
+Create config file and copy config file content from Kubernetes Cluster master machine to jenkins server and jenkins user home directory
 and save the content.
 
 vi .kube/config
@@ -202,6 +202,38 @@ JENKINS JOB SETP:
 ![image](https://github.com/vijay2181/jenkins-kubernetes-integration/assets/66196388/e4390dd2-0936-4d14-b493-5679c3c4b348)
 
 - copy the pipeline script from JenkinsfileKubernetes and paste in jenkins groovy sandbox
+
+```
+node {
+    
+    stage("Git clone or SCM"){
+        git 'https://github.com/vijay2181/springboot-mongo-docker'
+    }
+    
+    stage("Maven Build"){
+        def MavenHome = tool name: "MAVEN", type: "maven"
+        def mavenCMD = "${MavenHome}/bin/mvn"
+        sh "${mavenCMD} clean package"
+    }
+    
+    stage("Docker Build Image"){
+        sh "docker build -t vijay2181/springboot-mongo-docker ."
+    }
+    
+    stage("Docker Push Image"){
+        withCredentials([string(credentialsId: 'Docker_Password', variable: 'Docker_Password')]) {
+           sh "docker login -u vijay2181 -p ${Docker_Password}"
+            }
+           sh "docker push vijay2181/springboot-mongo-docker"
+   }
+    
+    stage("Deploy to Kubernetes Cluster"){
+          sh "kubectl apply -f springBootMongo.yml"
+   }  
+}
+```
+
+
   
 - app is deploying in default namespace of kubernetes
 
